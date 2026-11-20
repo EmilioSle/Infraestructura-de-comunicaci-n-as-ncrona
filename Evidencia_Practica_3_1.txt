@@ -1,0 +1,44 @@
+01 | REFERENCIA SINCRONA
+POST /api/carrito/exportaciones/sincrona -> HTTP 201 | 4088 ms
+{"message_id":"62ae57d7-1530-4d40-88c5-05f8f03d9e92","correlation_id":"dc97da94-a6e0-40d1-9db6-8227fe7187f0","estado":"completada","consulta":"http:\/\/127.0.0.1:8341\/api\/carrito\/exportaciones\/62ae57d7-1530-4d40-88c5-05f8f03d9e92"}
+GET /api/carrito/exportaciones/62ae57d7-1530-4d40-88c5-05f8f03d9e92 -> HTTP 200 | 457 ms
+{"message_id":"62ae57d7-1530-4d40-88c5-05f8f03d9e92","correlation_id":"dc97da94-a6e0-40d1-9db6-8227fe7187f0","estado":"completada","solicitado_en":"2026-11-20T16:19:14.005780Z","finalizado_en":"2026-11-20T16:19:15.619770Z","resultado_csv":"producto_id,cantidad,precio_centavos,subtotal_centavos\n1,2,850,1700\n2,1,1800,1800\n"}
+
+02 | TRES MENSAJES CON EL WORKER DETENIDO
+POST /api/carrito/exportaciones/asincrona -> HTTP 202 | 1236 ms
+{"message_id":"9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc","correlation_id":"c0cbcabe-5198-4293-8481-25a019553f4d","estado":"pendiente","consulta":"http:\/\/127.0.0.1:8341\/api\/carrito\/exportaciones\/9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc"}
+POST /api/carrito/exportaciones/asincrona -> HTTP 202 | 544 ms
+{"message_id":"dfa32606-0c49-48b4-a7fe-11f0d985ec50","correlation_id":"8d995d60-6df4-4f32-aa33-a7fa86ec8761","estado":"pendiente","consulta":"http:\/\/127.0.0.1:8341\/api\/carrito\/exportaciones\/dfa32606-0c49-48b4-a7fe-11f0d985ec50"}
+POST /api/carrito/exportaciones/asincrona -> HTTP 202 | 507 ms
+{"message_id":"f56d0eb9-5632-4e77-906d-533b6d82b6b6","correlation_id":"acce168f-4fa2-47a2-a016-0d2187af6b11","estado":"pendiente","consulta":"http:\/\/127.0.0.1:8341\/api\/carrito\/exportaciones\/f56d0eb9-5632-4e77-906d-533b6d82b6b6"}
+GET /api/carrito/exportaciones/9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc -> HTTP 200 | 439 ms
+{"message_id":"9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc","correlation_id":"c0cbcabe-5198-4293-8481-25a019553f4d","estado":"pendiente","solicitado_en":"2026-11-20T16:19:16.772860Z","finalizado_en":null,"resultado_csv":null}
+Cola exportaciones-carrito | mensajes: 3
+
+03 | MENSAJE INVALIDO
+POST /api/carrito/exportaciones/asincrona -> HTTP 422 | 666 ms
+{"message":"The formato field is required.","errors":{"formato":["The formato field is required."]}}
+Cola exportaciones-carrito | mensajes: 3
+
+04 | REANUDACION DEL WORKER Y RESULTADOS
+ 2026-11-20 16:19:30 App\Jobs\ProcesarExportacionCarrito .. RUNNING
+ 2026-11-20 16:19:31 App\Jobs\ProcesarExportacionCarrito .. 119.43ms DONE
+ 2026-11-20 16:19:31 App\Jobs\ProcesarExportacionCarrito .. RUNNING
+ 2026-11-20 16:19:31 App\Jobs\ProcesarExportacionCarrito .. 16.47ms DONE
+ 2026-11-20 16:19:31 App\Jobs\ProcesarExportacionCarrito .. RUNNING
+ 2026-11-20 16:19:31 App\Jobs\ProcesarExportacionCarrito .. 15.37ms DONE
+ 2026-11-20 16:19:34 Worker STOPPED Queue empty
+GET /api/carrito/exportaciones/9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc -> HTTP 200 | 541 ms
+{"message_id":"9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc","correlation_id":"c0cbcabe-5198-4293-8481-25a019553f4d","estado":"completada","solicitado_en":"2026-11-20T16:19:16.772860Z","finalizado_en":"2026-11-20T16:19:31.105943Z","resultado_csv":"producto_id,cantidad,precio_centavos,subtotal_centavos\n1,2,850,1700\n2,1,1800,1800\n"}
+Solicitud a finalización: 14333 ms
+GET /api/carrito/exportaciones/dfa32606-0c49-48b4-a7fe-11f0d985ec50 -> HTTP 200 | 581 ms
+{"message_id":"dfa32606-0c49-48b4-a7fe-11f0d985ec50","correlation_id":"8d995d60-6df4-4f32-aa33-a7fa86ec8761","estado":"completada","solicitado_en":"2026-11-20T16:19:18.031850Z","finalizado_en":"2026-11-20T16:19:31.206618Z","resultado_csv":"producto_id,cantidad,precio_centavos,subtotal_centavos\n1,2,850,1700\n2,1,1800,1800\n"}
+Solicitud a finalización: 13175 ms
+GET /api/carrito/exportaciones/f56d0eb9-5632-4e77-906d-533b6d82b6b6 -> HTTP 200 | 493 ms
+{"message_id":"f56d0eb9-5632-4e77-906d-533b6d82b6b6","correlation_id":"acce168f-4fa2-47a2-a016-0d2187af6b11","estado":"completada","solicitado_en":"2026-11-20T16:19:18.540548Z","finalizado_en":"2026-11-20T16:19:31.234247Z","resultado_csv":"producto_id,cantidad,precio_centavos,subtotal_centavos\n1,2,850,1700\n2,1,1800,1800\n"}
+Solicitud a finalización: 12694 ms
+Cola exportaciones-carrito | mensajes: 0
+
+05 | CORRELACION PRODUCTOR Y CONSUMIDOR
+[2026-11-20 16:19:17] local.INFO: Exportación publicada {"message_id":"9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc","correlation_id":"c0cbcabe-5198-4293-8481-25a019553f4d","estado":"pendiente","cola":"exportaciones-carrito"}
+[2026-11-20 16:19:31] local.INFO: Exportación finalizada {"message_id":"9a2b8a37-865f-4c31-b9d8-c47e0a3bbbcc","correlation_id":"c0cbcabe-5198-4293-8481-25a019553f4d","estado":"completada"}
